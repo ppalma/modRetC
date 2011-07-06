@@ -1,0 +1,193 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include <errno.h>
+#include <sys/types.h>
+#include <kom.h>
+#include <transport.h>
+#include <earthworm.h>
+
+/* include the appropriate definition of DEF_CONFIG for the OS */
+#if defined(_SOLARIS) || defined(_LINUX) || defined(_MACOSX)
+#include <startstop_unix_generic.h>
+#endif
+
+#ifdef _WINNT
+#include <startstop_winlib.h>
+#endif
+#ifdef _OS2
+#include <startstop_os2.h>
+#endif
+
+#define MAX_BYTES_STATUS MAX_BYTES_PER_EQ
+
+void SendRestartRequest( char* );
+void SendModRestartRequest( );
+void ReadRingName( char*, char* );
+
+
+SHM_INFO   region;                /* The shared memory region   */
+static unsigned char InstId;      /* local installation id      */
+static unsigned char MyModId;
+static unsigned char TypeRestart;
+static unsigned char TypeReqStatus;
+static unsigned char TypeStatus;
+
+static int ringKey;
+MSG_LOGO   logo;
+
+void SendModRestartRequest( )
+{
+	 char     msg[MAX_BYTES_STATUS];
+   MSG_LOGO rlogo;
+   long     rlen;
+   int      timeout=10;
+   int      rc;
+   int      i;
+
+/* Set logo values of message
+ *    **************************/
+   logo.type   = TypeStatus;
+   logo.mod    = 0;           /* zero is the wildcard */
+   logo.instid = InstId;
+	printf("antes del for\n");
+   for(i=1; i<timeout; i++)
+   {
+      rc = tport_getmsg( &region, &logo, 1,
+                         &rlogo, &rlen, msg, (long)MAX_BYTES_STATUS-1 );
+      if( rc == GET_NONE   )  {
+         sleep_ew( 1000 );
+         continue;
+      }
+      if( rc == GET_TOOBIG ) {
+         fprintf( stdout,
+            "Earthworm is running, but the status msg is too big for me!\n" );
+         return;
+      }
+      else {
+	printf("inde4\n");
+         msg[rlen]='\0';  /* null terminate the message */
+         fprintf( stdout, "%s\n", msg );
+         return;
+      }
+   }
+	printf("despues del for\n");
+/* If you got here, you timed out
+ *  ********************************/
+   fprintf( stdout,
+       "Earthworm may be hung; no response from startstop in %d seconds.\n",
+        timeout );
+   return;
+
+
+}
+void ReadRingName( char *ringname, char *configFile )
+{
+	int        nfiles;
+	char      *com, *str;
+
+	nfiles = k_open( configFile );
+	if ( nfiles == 0 )
+	{
+		printf( "restart: Error opening file <%s>. Exiting.\n",
+				configFile );
+		return;
+	}
+
+	/* Process Ring commands from startstop's command file
+	 *    ***************************************************/
+	while(nfiles > 0)          /* While there are command files open */
+	{
+		while(k_rd())         /* Read next line from active file  */
+		{
+			com = k_str();    /* Get the first token from line */
+
+			/* Ignore blank lines & comments
+			 *            *****************************/
+			if( !com )           continue;
+			if( com[0] == '#' )  continue;
+
+			/* Process only 1st Ring command
+			 *            *****************************/
+			if( k_its( "Ring" ) )
+			{
+				str = k_str();
+				strcpy( ringname, str );
+				break;
+			}
+
+			/* See if there were any errors processing this command
+			 *            ****************************************************/
+			if( k_err() )
+			{
+				printf( "restart: Bad <%s> command in <%s>. Exiting.\n",
+						com, configFile );
+				return;
+			}
+		}
+		nfiles = k_close();
+	}
+
+	return;
+}
+//end stolen code
+//
+main( int argc, char *argv[] )
+{
+	char *pid;
+	char *runPath;
+	char  ringname[MAX_RING_STR];
+	char  configFile[FILENAME_MAX] = DEF_CONFIG;
+
+
+	if ( GetLocalInst( &InstId ) != 0 )
+	{
+		fprintf( stderr,
+				"status: error getting local installation id; exiting!\n" );
+		return -1;
+	}
+
+	if ( GetModId( "MOD_STATUS", &MyModId ) != 0 )
+	{
+		fprintf( stderr,
+				"status: Invalid module id <MOD_STATUS> exiting!\n" );
+		return -1;
+	}
+
+	if ( GetType( "TYPE_REQSTATUS", &TypeReqStatus ) != 0 )
+	{
+		fprintf( stderr,
+				"status: Invalid message type <TYPE_REQSTATUS> exiting!\n" );
+		return -1;
+	}
+	if ( GetType( "TYPE_STATUS", &TypeStatus ) != 0 )
+	{
+		fprintf( stderr,
+				"status: Invalid message type <TYPE_STATUS> exiting!\n" );
+		return -1;
+	}
+
+
+
+
+
+
+	ReadRingName( ringname, configFile );
+
+	if( (ringKey = GetKey(ringname)) == -1 )
+	{
+		printf( "restart: Invalid ring name <%s>. Exiting.\n",
+				ringname );
+		return -1;
+	}
+
+	tport_attach( &region, ringKey );
+
+	// SendRestartRequest( pid );
+	SendModRestartRequest();
+
+	tport_detach( &region );
+	return 0;
+}
+

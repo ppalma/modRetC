@@ -1,0 +1,26 @@
+
+B = $(EW_HOME)/$(EW_VERSION)/bin
+L = $(EW_HOME)/$(EW_VERSION)/lib
+
+
+
+
+O =  modRetC.o $L/dirops_ew.o $L/time_ew.o $L/transport.o $L/sleep_ew.o $L/getutil.o $L/kom.o $L/logit.o
+
+hiwd: clean ${O}
+	$(CC) $(CFLAGS) -g -o $B/modRetC ${O} -lc -lpthread 
+#-lc -lm -lpthread
+
+
+.c.o:
+	$(CC) -c ${CFLAGS} $<
+
+lint:
+	lint modRetC.c  $(GLOBALFLAGS)
+
+clean: clean_bin 
+	rm -f a.out core *.o *.obj *% *~
+
+clean_bin:
+	rm -f $B/modRectC*
+
