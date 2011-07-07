@@ -5,10 +5,10 @@ L = $(EW_HOME)/$(EW_VERSION)/lib
 
 
 
-O =  modRetC.o $L/dirops_ew.o $L/time_ew.o $L/transport.o $L/sleep_ew.o $L/getutil.o $L/kom.o $L/logit.o
+O =  modRetC.o $L/dirops_ew.o $L/time_ew.o $L/transport.o $L/sleep_ew.o $L/getutil.o $L/kom.o $L/logit.o $L/startstop_lib.o $L/lockfile_ew.o $L/lockfile.o 
 
-hiwd: clean ${O}
-	$(CC) $(CFLAGS) -g -o $B/modRetC ${O} -lc -lpthread 
+modRetC: clean ${O}
+	$(CC) $(CFLAGS) -g -o $B/modRetC ${O} -lc -lpthread  -I/home/ppalma/Desktop/earthworm_7.4/src/include
 #-lc -lm -lpthread
 
 

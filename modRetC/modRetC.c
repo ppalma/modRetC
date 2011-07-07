@@ -58,10 +58,7 @@
 #include <netinet/in.h>
 
 /* include the appropriate definition of DEF_CONFIG for the OS */
-#if defined(_SOLARIS) || defined(_LINUX)  || defined(_MACOSX)
 #include <startstop_unix_generic.h>
-#endif
-
 #ifdef _WINNT
 #include <startstop_winlib.h>
 #define strncasecmp _strnicmp
@@ -92,6 +89,8 @@ static int ringKey;
 static int redirect = 0;
 
 #define MAX_BYTES_STATUS MAX_BYTES_PER_EQ
+
+
 
 main( int argc, char *argv[] )
 {
@@ -217,7 +216,12 @@ main( int argc, char *argv[] )
 	fprintf( stdout, "NOTE: If next line reads \"ERROR: tport_attach...\","
 			" Earthworm is not running.\n" );
 	tport_attach( &region, ringKey );
-	SocketLoop();
+//	SocketLoop();
+
+
+	 //RestartChild("9999");
+//	  StopChild("iiii",1);
+	 RunEarthworm (1,"");
 	tport_detach( &region );
 	if (redirect != 0)
 		fclose(stream);
