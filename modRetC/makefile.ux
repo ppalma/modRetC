@@ -1,15 +1,23 @@
-
 B = $(EW_HOME)/$(EW_VERSION)/bin
 L = $(EW_HOME)/$(EW_VERSION)/lib
+I = $(EW_HOME)/src/include
 
-
-
-
-O =  modRetC.o $L/dirops_ew.o $L/time_ew.o $L/transport.o $L/sleep_ew.o $L/getutil.o $L/kom.o $L/logit.o $L/startstop_lib.o $L/lockfile_ew.o $L/lockfile.o 
+O =  modRetC.o \
+	$L/startstop_unix_generic.o \
+	$L/startstop_lib.o \
+	$L/time_ew.o \
+	$L/transport.o \
+	$L/lockfile_ew.o \
+	$L/lockfile.o \
+	$L/sleep_ew.o \
+	$L/logit.o \
+	$L/threads_ew.o \
+	$L/sema_ew.o \
+	$L/kom.o \
+	$L/getutil.o \
 
 modRetC: clean ${O}
-	$(CC) $(CFLAGS) -g -o $B/modRetC ${O} -lc -lpthread  -I/home/ppalma/Desktop/earthworm_7.4/src/include
-#-lc -lm -lpthread
+	$(CC) $(CFLAGS) -g -o $B/modRetC ${O} -I$I -lc -lpthread 
 
 
 .c.o:
@@ -23,4 +31,3 @@ clean: clean_bin
 
 clean_bin:
 	rm -f $B/modRectC*
-
