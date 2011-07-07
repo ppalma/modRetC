@@ -15,6 +15,9 @@ O =  modRetC.o \
 	$L/sema_ew.o \
 	$L/kom.o \
 	$L/getutil.o \
+	$L/dirops_ew.o \
+#	$(EW_HOME)/src/system_control/status/status.o
+	
 
 modRetC: clean ${O}
 	$(CC) $(CFLAGS) -g -o $B/modRetC ${O} -I$I -lc -lpthread 
